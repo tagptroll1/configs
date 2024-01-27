@@ -41,10 +41,22 @@ P.S. You can delete this when you're done too. It's your config now :)
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
+local map = vim.keymap.set
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 vim.opt.tabstop = 4
 
+vim.g.copilot_no_tab_map = true
+vim.g.copilot_assume_mapped = true
+vim.g.copilot_tab_fallback = ""
+vim.g.copilot_filetypes = {
+  ["*"] = false,
+  ["javascript"] = true,
+  ["typescript"] = true,
+  ["lua"] = false,
+  ["go"] = true,
+  ["python"] = true,
+}
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    https://github.com/folke/lazy.nvim
 --    `:help lazy.nvim.txt` for more info
@@ -61,6 +73,11 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+-- Custom remaps
+vim.keymap.set("n", "<C-d>", "<C-d>zz", {desc = "Jump half a screen down and center cursor"})
+vim.keymap.set("n", "<C-u>", "<C-u>zz", {desc = "Jump half a screen up and center cursor"})
+
+
 -- [[ Configure plugins ]]
 -- NOTE: Here is where you install your plugins.
 --  You can configure plugins using the `config` key.
@@ -76,7 +93,6 @@ require('lazy').setup({
 
   -- Detect tabstop and shiftwidth automatically
   'tpope/vim-sleuth',
-
   -- NOTE: This is where your plugins related to LSP can be installed.
   --  The configuration is done below. Search for lspconfig to find it below.
   {
@@ -95,7 +111,6 @@ require('lazy').setup({
       'folke/neodev.nvim',
     },
   },
-
   {
     -- Autocompletion
     'hrsh7th/nvim-cmp',
@@ -112,7 +127,18 @@ require('lazy').setup({
       'rafamadriz/friendly-snippets',
     },
   },
-
+  {
+    "nvim-tree/nvim-tree.lua",
+    version = "*",
+    lazy = false,
+    dependencies = {
+      "nvim-tree/nvim-web-devicons",
+      "echasnovski/mini.base16",
+    },
+    config = function()
+      require("nvim-tree").setup {}
+    end,
+  },
   -- Useful plugin to show you pending keybinds.
   { 'folke/which-key.nvim', opts = {} },
   {
@@ -130,14 +156,14 @@ require('lazy').setup({
       on_attach = function(bufnr)
         local gs = package.loaded.gitsigns
 
-        local function map(mode, l, r, opts)
+        local function lmap(mode, l, r, opts)
           opts = opts or {}
           opts.buffer = bufnr
           vim.keymap.set(mode, l, r, opts)
         end
 
         -- Navigation
-        map({ 'n', 'v' }, ']c', function()
+        lmap({ 'n', 'v' }, ']c', function()
           if vim.wo.diff then
             return ']c'
           end
@@ -147,7 +173,7 @@ require('lazy').setup({
           return '<Ignore>'
         end, { expr = true, desc = 'Jump to next hunk' })
 
-        map({ 'n', 'v' }, '[c', function()
+        lmap({ 'n', 'v' }, '[c', function()
           if vim.wo.diff then
             return '[c'
           end
@@ -159,37 +185,46 @@ require('lazy').setup({
 
         -- Actions
         -- visual mode
-        map('v', '<leader>hs', function()
+        lmap('v', '<leader>hs', function()
           gs.stage_hunk { vim.fn.line '.', vim.fn.line 'v' }
         end, { desc = 'stage git hunk' })
-        map('v', '<leader>hr', function()
+        lmap('v', '<leader>hr', function()
           gs.reset_hunk { vim.fn.line '.', vim.fn.line 'v' }
         end, { desc = 'reset git hunk' })
         -- normal mode
-        map('n', '<leader>hs', gs.stage_hunk, { desc = 'git stage hunk' })
-        map('n', '<leader>hr', gs.reset_hunk, { desc = 'git reset hunk' })
-        map('n', '<leader>hS', gs.stage_buffer, { desc = 'git Stage buffer' })
-        map('n', '<leader>hu', gs.undo_stage_hunk, { desc = 'undo stage hunk' })
-        map('n', '<leader>hR', gs.reset_buffer, { desc = 'git Reset buffer' })
-        map('n', '<leader>hp', gs.preview_hunk, { desc = 'preview git hunk' })
-        map('n', '<leader>hb', function()
+        lmap('n', '<leader>hs', gs.stage_hunk, { desc = 'git stage hunk' })
+        lmap('n', '<leader>hr', gs.reset_hunk, { desc = 'git reset hunk' })
+        lmap('n', '<leader>hS', gs.stage_buffer, { desc = 'git Stage buffer' })
+        lmap('n', '<leader>hu', gs.undo_stage_hunk, { desc = 'undo stage hunk' })
+        lmap('n', '<leader>hR', gs.reset_buffer, { desc = 'git Reset buffer' })
+        lmap('n', '<leader>hp', gs.preview_hunk, { desc = 'preview git hunk' })
+        lmap('n', '<leader>hb', function()
           gs.blame_line { full = false }
         end, { desc = 'git blame line' })
-        map('n', '<leader>hd', gs.diffthis, { desc = 'git diff against index' })
-        map('n', '<leader>hD', function()
+        lmap('n', '<leader>hd', gs.diffthis, { desc = 'git diff against index' })
+        lmap('n', '<leader>hD', function()
           gs.diffthis '~'
         end, { desc = 'git diff against last commit' })
 
         -- Toggles
-        map('n', '<leader>tb', gs.toggle_current_line_blame, { desc = 'toggle git blame line' })
-        map('n', '<leader>td', gs.toggle_deleted, { desc = 'toggle git show deleted' })
+        lmap('n', '<leader>tb', gs.toggle_current_line_blame, { desc = 'toggle git blame line' })
+        lmap('n', '<leader>td', gs.toggle_deleted, { desc = 'toggle git show deleted' })
 
         -- Text object
-        map({ 'o', 'x' }, 'ih', ':<C-U>Gitsigns select_hunk<CR>', { desc = 'select git hunk' })
+        lmap({ 'o', 'x' }, 'ih', ':<C-U>Gitsigns select_hunk<CR>', { desc = 'select git hunk' })
       end,
     },
   },
 
+  'github/copilot.vim',
+  'mfussenegger/nvim-dap',
+  'leoluz/nvim-dap-go',
+  {
+    'rcarriga/nvim-dap-ui',
+    dependencies = {
+      'mfussenegger/nvim-dap',
+    }
+  },
   {
     -- Theme inspired by Atom
     'navarasu/onedark.nvim',
@@ -205,7 +240,7 @@ require('lazy').setup({
     -- See `:help lualine.txt`
     opts = {
       options = {
-        icons_enabled = false,
+        icons_enabled = true,
         theme = 'onedark',
         component_separators = '|',
         section_separators = '',
@@ -245,6 +280,13 @@ require('lazy').setup({
       },
     },
   },
+  {
+    'ThePrimeagen/harpoon',
+    branch = "harpoon2",
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+    },
+  },
 
   {
     -- Highlight, edit, and navigate code
@@ -278,6 +320,147 @@ require('lazy').setup({
       require("VimBeGood").setup {}
     end,
   },
+{
+    "scalameta/nvim-metals",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      {
+        "mfussenegger/nvim-dap",
+        config = function(self, opts)
+          -- Debug settings if you're using nvim-dap
+          local dap = require("dap")
+
+          dap.configurations.scala = {
+            {
+              type = "scala",
+              request = "launch",
+              name = "RunOrTest",
+              metals = {
+                runType = "runOrTestFile",
+                --args = { "firstArg", "secondArg", "thirdArg" }, -- here just as an example
+              },
+            },
+            {
+              type = "scala",
+              request = "launch",
+              name = "Test Target",
+              metals = {
+                runType = "testTarget",
+              },
+            },
+          }
+        end
+      },
+    },
+    ft = { "scala", "sbt", "java" },
+    opts = function()
+      local metals_config = require("metals").bare_config()
+
+      -- Example of settings
+      metals_config.settings = {
+        showImplicitArguments = true,
+        excludedPackages = { "akka.actor.typed.javadsl", "com.github.swagger.akka.javadsl" },
+      }
+
+      -- *READ THIS*
+      -- I *highly* recommend setting statusBarProvider to true, however if you do,
+      -- you *have* to have a setting to display this in your statusline or else
+      -- you'll not see any messages from metals. There is more info in the help
+      -- docs about this
+      -- metals_config.init_options.statusBarProvider = "on"
+
+      -- Example if you are using cmp how to make sure the correct capabilities for snippets are set
+      metals_config.capabilities = require("cmp_nvim_lsp").default_capabilities()
+
+      metals_config.on_attach = function(client, bufnr)
+        require("metals").setup_dap()
+
+        -- LSP mappings
+        map("n", "gD", vim.lsp.buf.definition)
+        map("n", "K", vim.lsp.buf.hover)
+        map("n", "gi", vim.lsp.buf.implementation)
+        map("n", "gr", vim.lsp.buf.references)
+        map("n", "gds", vim.lsp.buf.document_symbol)
+        map("n", "gws", vim.lsp.buf.workspace_symbol)
+        map("n", "<leader>cl", vim.lsp.codelens.run)
+        map("n", "<leader>sh", vim.lsp.buf.signature_help)
+        map("n", "<leader>rn", vim.lsp.buf.rename)
+        map("n", "<leader>f", vim.lsp.buf.format)
+        map("n", "<leader>ca", vim.lsp.buf.code_action)
+
+        map("n", "<leader>ws", function()
+          require("metals").hover_worksheet()
+        end)
+
+        -- all workspace diagnostics
+        map("n", "<leader>aa", vim.diagnostic.setqflist)
+
+        -- all workspace errors
+        map("n", "<leader>ae", function()
+          vim.diagnostic.setqflist({ severity = "E" })
+        end)
+
+        -- all workspace warnings
+        map("n", "<leader>aw", function()
+          vim.diagnostic.setqflist({ severity = "W" })
+        end)
+
+        -- buffer diagnostics only
+        map("n", "<leader>d", vim.diagnostic.setloclist)
+
+        map("n", "[c", function()
+          vim.diagnostic.goto_prev({ wrap = false })
+        end)
+
+        map("n", "]c", function()
+          vim.diagnostic.goto_next({ wrap = false })
+        end)
+
+        -- Example mappings for usage with nvim-dap. If you don't use that, you can
+        -- skip these
+        map("n", "<leader>dc", function()
+          require("dap").continue()
+        end)
+
+        map("n", "<leader>dr", function()
+          require("dap").repl.toggle()
+        end)
+
+        map("n", "<leader>dK", function()
+          require("dap.ui.widgets").hover()
+        end)
+
+        map("n", "<leader>dt", function()
+          require("dap").toggle_breakpoint()
+        end)
+
+        map("n", "<leader>dso", function()
+          require("dap").step_over()
+        end)
+
+        map("n", "<leader>dsi", function()
+          require("dap").step_into()
+        end)
+
+        map("n", "<leader>dl", function()
+          require("dap").run_last()
+        end)
+      end
+
+      return metals_config
+    end,
+    config = function(self, metals_config)
+      local nvim_metals_group = vim.api.nvim_create_augroup("nvim-metals", { clear = true })
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = self.ft,
+        callback = function()
+          require("metals").initialize_or_attach(metals_config)
+        end,
+        group = nvim_metals_group,
+      })
+    end
+
+  }
   -- End of import -- Search for me to jump
   -- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
   --       These are some example plugins that I've included in the kickstart repository.
@@ -352,6 +535,67 @@ vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next diagnos
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Open floating diagnostic message' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostics list' })
 
+-- Configure theme to be transparent
+require('onedark').setup {
+  transparent = true
+}
+require('onedark').load()
+-- dap load launch.js for debugging
+require('dap-go').setup()
+require('dap.ext.vscode').load_launchjs(nil, {})
+-- dap ui auto launch
+local dap, dapui = require("dap"), require("dapui")
+dapui.setup()
+dap.listeners.after.event_initialized["dapui_config"] = function ()
+  dapui.open()
+end
+dap.listeners.before.event_terminated["dapui_config"] = function ()
+  dapui.close()
+end
+dap.listeners.before.event_exited["dapui_config"] = function ()
+  dapui.close()
+end
+
+
+-- Harpoon keys
+local harpoon = require("harpoon")
+harpoon:setup()
+-- basic telescope configuration
+local conf = require("telescope.config").values
+local function toggle_telescope(harpoon_files)
+    local file_paths = {}
+    for _, item in ipairs(harpoon_files.items) do
+        table.insert(file_paths, item.value)
+    end
+
+    require("telescope.pickers").new({}, {
+        prompt_title = "Harpoon",
+        finder = require("telescope.finders").new_table({
+            results = file_paths,
+        }),
+        previewer = conf.file_previewer({}),
+        sorter = conf.generic_sorter({}),
+    }):find()
+end
+
+vim.keymap.set("n", "<leader>a", function() harpoon:list():append() end)
+vim.keymap.set("n", "<C-e>", function() toggle_telescope(harpoon:list()) end,
+    { desc = "Open harpoon window" })
+vim.keymap.set("n", "<C-h>", function() harpoon:list():select(1) end)
+vim.keymap.set("n", "<C-j>", function() harpoon:list():select(2) end)
+vim.keymap.set("n", "<C-k>", function() harpoon:list():select(3) end)
+vim.keymap.set("n", "<C-l>", function() harpoon:list():select(4) end)
+-- dap icons
+vim.fn.sign_define("DapBreakpoint", {text = '🟥', texthl='', linehl='', numhl=''})
+vim.fn.sign_define("DapStopped", {text = '▶️', texthl='', linehl='', numhl=''})
+
+-- dap keybinds
+vim.keymap.set('n', '<F5>', dap.continue, {desc="Debug continue"})
+vim.keymap.set('n', '<F10>', dap.step_over, {desc="Debug step over"})
+vim.keymap.set('n', '<F11>', dap.step_into, {desc="Debug step into"})
+vim.keymap.set('n', '<F12>', dap.step_out, {desc="Debug step out"})
+vim.keymap.set('n', '<leader>b', dap.toggle_breakpoint, {desc="Set breakpoint"})
+
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
 local highlight_group = vim.api.nvim_create_augroup('YankHighlight', { clear = true })
@@ -421,10 +665,6 @@ vim.keymap.set('n', '<leader><space>', require('telescope.builtin').buffers, { d
 vim.keymap.set('n', '<leader>/', function()
   require('telescope.builtin').current_buffer_fuzzy_find()
 end, { desc = '[/] Fuzzily search in current buffer' })
-
--- Custom insterts / macros
-vim.keymap.set('i', '<C-{>', '{}<left>', { desc = 'Insert open and close curlies' })
-vim.keymap.set('i', '<C-[>', '[]<left>', { desc = 'Insert open and close brackets' })
 
 local function telescope_live_grep_open_files()
   require('telescope.builtin').live_grep {
@@ -501,9 +741,6 @@ vim.defer_fn(function()
       },
       swap = {
         enable = true,
-        swap_next = {
-          ['<leader>a'] = '@parameter.inner',
-        },
         swap_previous = {
           ['<leader>A'] = '@parameter.inner',
         },
@@ -567,6 +804,7 @@ require('which-key').register {
   ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
   ['<leader>t'] = { name = '[T]oggle', _ = 'which_key_ignore' },
   ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
+  ['<leader>b'] = { name = '[B]reakpoint', _ = 'which_key_ignore' },
 }
 -- register which-key VISUAL mode
 -- required for visual <leader>hs (hunk stage) to work
@@ -591,8 +829,9 @@ require('mason-lspconfig').setup()
 local servers = {
   -- clangd = {},
   gopls = {
-    
+
   },
+  jsonls = {},
   pyright = {},
   --  pytype = {},
   -- rust_analyzer = {},
@@ -641,6 +880,9 @@ local luasnip = require 'luasnip'
 require('luasnip.loaders.from_vscode').lazy_load()
 luasnip.config.setup {}
 
+
+vim.api.nvim_set_keymap("i", "<S-q>", 'copilot#Accept("<CR>")', {silent = true, expr = true, replace_keycodes = false})
+
 cmp.setup {
   snippet = {
     expand = function(args)
@@ -663,8 +905,6 @@ cmp.setup {
     ['<Tab>'] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_next_item()
-      elseif luasnip.expand_or_locally_jumpable() then
-        luasnip.expand_or_jump()
       else
         fallback()
       end
@@ -691,7 +931,7 @@ local format_sync_grp = vim.api.nvim_create_augroup("GoImport", {})
 vim.api.nvim_create_autocmd("BufWritePre", {
   pattern = "*.go",
   callback = function()
-   require('go.format').goimport()
+    require('go.format').goimport()
   end,
   group = format_sync_grp,
 })
