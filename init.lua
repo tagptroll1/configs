@@ -42,12 +42,13 @@ P.S. You can delete this when you're done too. It's your config now :)
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
 vim.loader.enable()
+vim.opt.conceallevel = 2
 local map = vim.keymap.set
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 vim.opt.tabstop = 4
 vim.opt.softtabstop = 0
-vim.opt.shiftwidth = 4 
+vim.opt.shiftwidth = 4
 
 vim.g.copilot_no_tab_map = true
 vim.g.copilot_assume_mapped = true
@@ -117,17 +118,18 @@ require('lazy').setup({
   {
     -- Autocompletion
     'hrsh7th/nvim-cmp',
+    event = "InsertEnter",
     dependencies = {
       -- Snippet Engine & its associated nvim-cmp source
-      'L3MON4D3/LuaSnip',
-      'saadparwaiz1/cmp_luasnip',
+      {'L3MON4D3/LuaSnip', lazy = true},
+      {'saadparwaiz1/cmp_luasnip', lazy = true},
 
       -- Adds LSP completion capabilities
-      'hrsh7th/cmp-nvim-lsp',
-      'hrsh7th/cmp-path',
+        {'hrsh7th/cmp-nvim-lsp', lazy = true},
+      {'hrsh7th/cmp-path', lazy = true},
 
       -- Adds a number of user-friendly snippets
-      'rafamadriz/friendly-snippets',
+      {'rafamadriz/friendly-snippets', lazy = true},
     },
   },
   {
@@ -241,12 +243,13 @@ require('lazy').setup({
     -- Set lualine as statusline
     'nvim-lualine/lualine.nvim',
     -- See `:help lualine.txt`
+    dependencies = {
+      'nvim-tree/nvim-web-devicons'
+    },
     opts = {
       options = {
         icons_enabled = true,
-        theme = 'onedark',
-        component_separators = '|',
-        section_separators = '',
+        theme = 'horizon',
       },
     },
   },
@@ -294,8 +297,9 @@ require('lazy').setup({
   {
     -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
+    lazy = true,
     dependencies = {
-      'nvim-treesitter/nvim-treesitter-textobjects',
+      {'nvim-treesitter/nvim-treesitter-textobjects', lazy = true},
     },
     build = ':TSUpdate',
   },
@@ -329,7 +333,7 @@ require('lazy').setup({
       "nvim-lua/plenary.nvim",
       {
         "mfussenegger/nvim-dap",
-        config = function(self, opts)
+        config = function()
           -- Debug settings if you're using nvim-dap
           local dap = require("dap")
 
@@ -375,7 +379,7 @@ require('lazy').setup({
       -- Example if you are using cmp how to make sure the correct capabilities for snippets are set
       metals_config.capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-      metals_config.on_attach = function(client, bufnr)
+      metals_config.on_attach = function()
         require("metals").setup_dap()
 
         -- LSP mappings
@@ -476,8 +480,8 @@ require('lazy').setup({
         {
           name = "work",
           path = "~/vaults/work",
-        }
-      }
+        },
+      },
     }
   }
   -- End of import -- Search for me to jump
@@ -494,7 +498,30 @@ require('lazy').setup({
   --
   --    For additional information see: https://github.com/folke/lazy.nvim#-structuring-your-plugins
   -- { import = 'custom.plugins' },
-}, {})
+}, {
+    performance = {
+    cache = {
+      enabled = true,
+    },
+    reset_packpath = true, -- reset the package path to improve startup time
+    rtp = {
+      reset = true, -- reset the runtime path to $VIMRUNTIME and your config directory
+      ---@type string[]
+      paths = {}, -- add any custom paths here that you want to includes in the rtp
+      ---@type string[] list any plugins you want to disable here
+      disabled_plugins = {
+        "gzip",
+        "matchit",
+        "matchparen",
+        "netrwPlugin",
+        "tarPlugin",
+        "tohtml",
+        "tutor",
+        "zipPlugin",
+      },
+    },
+  },
+  })
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -578,7 +605,7 @@ end
 
 -- Harpoon keys
 local harpoon = require("harpoon")
-harpoon:setup()
+harpoon:setup({})
 -- basic telescope configuration
 local conf = require("telescope.config").values
 local function toggle_telescope(harpoon_files)
@@ -708,10 +735,12 @@ vim.keymap.set('n', '<leader>sr', require('telescope.builtin').resume, { desc = 
 vim.defer_fn(function()
   require('nvim-treesitter.configs').setup {
     -- Add languages to be installed here that you want installed for treesitter
-    ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'javascript', 'typescript', 'vimdoc', 'vim', 'bash' },
-
+    ensure_installed = {'go', 'lua', 'python', 'tsx', 'javascript', 'typescript', 'vimdoc', 'vim', 'bash' },
+    modules = {},
+    sync_install = false,
+    ignore_install = {},
     -- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
-    auto_install = false,
+    auto_install = true,
 
     highlight = { enable = true },
     indent = { enable = true },
