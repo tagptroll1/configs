@@ -41,10 +41,13 @@ P.S. You can delete this when you're done too. It's your config now :)
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
+vim.loader.enable()
 local map = vim.keymap.set
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 vim.opt.tabstop = 4
+vim.opt.softtabstop = 0
+vim.opt.shiftwidth = 4 
 
 vim.g.copilot_no_tab_map = true
 vim.g.copilot_assume_mapped = true
@@ -460,6 +463,22 @@ require('lazy').setup({
       })
     end
 
+  }, {
+    "epwalsh/obsidian.nvim",
+    version = "*",
+    lazy = true,
+    ft = "markdown",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+    },
+    opts = {
+      workspaces = {
+        {
+          name = "work",
+          path = "~/vaults/work",
+        }
+      }
+    }
   }
   -- End of import -- Search for me to jump
   -- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
