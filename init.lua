@@ -50,17 +50,6 @@ vim.opt.tabstop = 4
 vim.opt.softtabstop = 0
 vim.opt.shiftwidth = 4
 
-vim.g.copilot_no_tab_map = true
-vim.g.copilot_assume_mapped = true
-vim.g.copilot_tab_fallback = ""
-vim.g.copilot_filetypes = {
-  ["*"] = false,
-  ["javascript"] = true,
-  ["typescript"] = true,
-  ["lua"] = false,
-  ["go"] = true,
-  ["python"] = true,
-}
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    https://github.com/folke/lazy.nvim
 --    `:help lazy.nvim.txt` for more info
@@ -221,7 +210,6 @@ require('lazy').setup({
     },
   },
 
-  'github/copilot.vim',
   'mfussenegger/nvim-dap',
   'leoluz/nvim-dap-go',
   {
@@ -576,8 +564,8 @@ vim.keymap.set('n', 'k', "v:count == 0 ? 'gk' : 'k'", { expr = true, silent = tr
 vim.keymap.set('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = true })
 
 -- Diagnostic keymaps
-vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous diagnostic message' })
-vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next diagnostic message' })
+vim.keymap.set('n', '>d', vim.diagnostic.goto_prev, { desc = 'Go to previous diagnostic message' })
+vim.keymap.set('n', '<d', vim.diagnostic.goto_next, { desc = 'Go to next diagnostic message' })
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Open floating diagnostic message' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostics list' })
 
@@ -928,8 +916,6 @@ local luasnip = require 'luasnip'
 require('luasnip.loaders.from_vscode').lazy_load()
 luasnip.config.setup {}
 
-
-vim.api.nvim_set_keymap("i", "<S-q>", 'copilot#Accept("<CR>")', {silent = true, expr = true, replace_keycodes = false})
 
 cmp.setup {
   snippet = {
